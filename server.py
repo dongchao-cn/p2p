@@ -48,7 +48,7 @@ class Server():
             
             # 创建新表
             cur.execute("CREATE TABLE User(ID INT PRIMARY KEY AUTO_INCREMENT,Name VARCHAR(25) NOT NULL UNIQUE,\
-                Passwd VARCHAR(25) NOT NULL,IP VARCHAR(25),Port INT,ListenPort INT);")
+                Passwd VARCHAR(25) NOT NULL,IP VARCHAR(25),ListenPort INT);")
             cur.execute("CREATE TABLE File(ID INT PRIMARY KEY AUTO_INCREMENT,Name VARCHAR(25) NOT NULL,Size INT NOT NULL,\
                 UploadUserID INT,FOREIGN KEY(UploadUserID) REFERENCES User(ID) ON DELETE SET NULL ON UPDATE CASCADE);")
 
@@ -96,7 +96,7 @@ class Server():
         finally:
             if con:
                 con.close()
-    def userLogin(self,userName,passwd,IP,Port,listenPort):
+    def userLogin(self,userName,passwd,IP,listenPort):
         ''' 用户登陆 '''
         try:
             con = None
@@ -108,10 +108,10 @@ class Server():
             val = [userName,passwd]
             cur.execute("SELECT * FROM User WHERE Name = %s AND Passwd = %s;",val)
             user = cur.fetchone()
-            val = [IP,Port,listenPort,user[0]]
-            cur.execute("UPDATE User SET IP = %s ,Port = %s ,ListenPort = %s WHERE ID = %s;",val)
+            val = [IP,listenPort,user[0]]
+            cur.execute("UPDATE User SET IP = %s ,ListenPort = %s WHERE ID = %s;",val)
             con.commit()
-            print "userLogin Success,Name = %s,passwd = %s,IP = %s,Port = %s,ListenPort = %s!" % (userName,passwd,IP,Port,listenPort)
+            print "userLogin Success,Name = %s,passwd = %s,IP = %s,ListenPort = %s!" % (userName,passwd,IP,listenPort)
             return user[0]
         except:
             return False
@@ -131,8 +131,8 @@ class Server():
             val = [userName,passwd]
             cur.execute("SELECT * FROM User WHERE Name = %s AND Passwd = %s;",val)
             user = cur.fetchone()
-            val = ['NULL','0','0',user[0]]
-            cur.execute("UPDATE User SET IP = %s ,Port = %s ,ListenPort = %s WHERE ID = %s;",val)
+            val = ['NULL','0',user[0]]
+            cur.execute("UPDATE User SET IP = %s ,ListenPort = %s WHERE ID = %s;",val)
             con.commit()
             print "userLogout Success,Name = %s,passwd = %s!" % (userName,passwd)
             return True
@@ -154,8 +154,8 @@ class Server():
             val = [UserID]
             cur.execute("SELECT * FROM User WHERE ID = %s;",val)
             user = cur.fetchone()
-            print "getUser Success,Name = %s,Passwd = %s,IP = %s,Port = %s,listenPort = %s!" % (user[1],user[2],user[3],user[4],user[5])
-            return user[1],user[2],user[3],user[4],user[5]
+            print "getUser Success,Name = %s,Passwd = %s,IP = %s,listenPort = %s!" % (user[1],user[2],user[3],user[4])
+            return user[1],user[2],user[3],user[4]
         finally:
             if con:
                 con.close()
@@ -254,12 +254,12 @@ class Server():
         
         if reqType == RequsetType.userLogin:
             # 登录用户
-            Name,Passwd,IP,Port,listenPort = struct.unpack('!25s25s25s2I',reqContext)
+            Name,Passwd,IP,listenPort = struct.unpack('!25s25s25sI',reqContext)
             Name = Name.rstrip('\0')
             Passwd = Passwd.rstrip('\0')
             IP = IP.rstrip('\0')
             ansContext = ''
-            ret = self.userLogin(Name,Passwd,IP,Port,listenPort)
+            ret = self.userLogin(Name,Passwd,IP,listenPort)
             if ret:
                 ansType = AnswerType.success
                 ansContext = struct.pack('!I',ret)
@@ -305,7 +305,7 @@ class Server():
                 ansType = AnswerType.failed
                 ansContext = struct.pack('!100s','No Such File!!!!!!!')
             else:
-                (a,b,IP,d,ListenPort) = self.getUser(UploadUserID)
+                (a,b,IP,ListenPort) = self.getUser(UploadUserID)
                 if IP:
                     ansType = AnswerType.success
                     ansContext = struct.pack('!I25sI',Size,str(IP),ListenPort)
@@ -317,7 +317,7 @@ class Server():
 if __name__ == '__main__':
     server = Server()
     server.initServer()
-    #server.addUser('dc','ddd')
+    server.addUser('dc','123')
     #print server.getUser(1)
     #server.delUser('dc')
     #server.userLogin('dc','ddd','127.0.0.1',8888,7000)

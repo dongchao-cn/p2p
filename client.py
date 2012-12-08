@@ -20,6 +20,11 @@ class AnswerType:
 class Client:
     ServerIP = ''
     ServerPort = 0
+
+    LocalIP = ''
+    LocalPort = 0
+    LocalListenPort = 0
+    
     sock = None
     sockListen = None
     getFileSock = None
@@ -29,16 +34,14 @@ class Client:
     
     def __init__(self):
         thread.start_new_thread(self.__listenForOtherClient,())
+        self.LocalIP = socket.gethostbyname(socket.gethostname())
         pass
     
     def __listenForOtherClient(self):
         ''' 监听等待其他Client的连接请求 '''
-
         self.sockListen = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        localIP = socket.gethostbyname(socket.gethostname())
-        port = random.randint(7000, 7999)
-        #print "local ip:%s %s" % (localIP,port)
-        self.sockListen.bind((localIP, port))
+        self.LocalListenPort = random.randint(7000, 7999)
+        self.sockListen.bind((self.LocalIP, self.LocalListenPort))
         self.sockListen.listen(10)
         
         while True:
@@ -63,10 +66,11 @@ class Client:
         self.ServerPort = ServerPort
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((self.ServerIP, self.ServerPort))
+        self.LocalPort = self.sock.getsockname()[1]
         
     def __Request(self,reqType,reqContext):
         localIP = socket.gethostbyname(socket.gethostname())
-        self.__connectServer(localIP);
+        self.__connectServer(localIP)
         self.sock.send(reqType)
         self.sock.send(reqContext)
         ansType = self.sock.recv(2)
@@ -76,7 +80,6 @@ class Client:
     def userReg(self,Name,Passwd):
         ''' 用户注册 ''' 
         reqContext = struct.pack('!25s25s',Name,Passwd)
-        #print reqContext
         ansType,asnContext = self.__Request(RequsetType.userReg,reqContext)
         if ansType != AnswerType.success:
             print 'userReg failed: %s' % asnContext
@@ -85,10 +88,7 @@ class Client:
 
     def userLogin(self,Name,Passwd):
         ''' 用户登录，返回值为用户ID '''
-        ClientIP = self.sock.getsockname()[0]
-        ClientPort = self.sock.getsockname()[1]
-        listenPort = self.sockListen.getsockname()[1]
-        reqContext = struct.pack('!25s25s25s2I',Name,Passwd,ClientIP,ClientPort,listenPort)
+        reqContext = struct.pack('!25s25s25sI',str(Name),str(Passwd),self.LocalIP,self.LocalListenPort)
         ansType,ansContext = self.__Request(RequsetType.userLogin,reqContext)
         if ansType != AnswerType.success:
             print 'userLogin failed: %s' % ansContext
@@ -152,17 +152,17 @@ class Client:
 
 if __name__ == '__main__':
     client = Client()
-    #client.listenForOtherClient();
+    #client.listenForOtherClient()
     #client.Request('ddddd')
-    client.userReg('dc','123')
+    #client.userReg('dc','123')
     ID = client.userLogin('dc','123')
 
-    client.shareFile('osrloaderv30.zip',ID)
+    #client.shareFile('osrloaderv30.zip',ID)
 
     #os.system("pause")
     
-    client.getFile('osrloaderv30.zip')
+    #client.getFile('osrloaderv30.zip')
 
-    client.userLogout('dc','123')
+    #client.userLogout('dc','123')
 
 
