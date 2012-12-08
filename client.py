@@ -79,12 +79,14 @@ class Client:
 
     def userReg(self,Name,Passwd):
         ''' 用户注册 ''' 
-        reqContext = struct.pack('!25s25s',Name,Passwd)
+        reqContext = struct.pack('!25s25s',str(Name),str(Passwd))
         ansType,asnContext = self.__Request(RequsetType.userReg,reqContext)
         if ansType != AnswerType.success:
             print 'userReg failed: %s' % asnContext
+            return False
         else:
             print 'userReg success!'
+            return True
 
     def userLogin(self,Name,Passwd):
         ''' 用户登录，返回值为用户ID '''
