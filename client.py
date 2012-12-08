@@ -102,7 +102,7 @@ class Client:
 
     def userLogout(self,Name,Passwd):
         ''' 用户注销 '''
-        reqContext = struct.pack('!25s25s',Name,Passwd)
+        reqContext = struct.pack('!25s25s',str(Name),str(Passwd))
         ansType,asnContext = self.__Request(RequsetType.userLogout,reqContext)
         if ansType != AnswerType.success:
             print 'userLogout failed: %s' % asnContext
@@ -112,7 +112,7 @@ class Client:
     def shareFile(self,Name,UploadUserID):
         ''' 分享文件 '''
         statinfo = os.stat(self.sendDir + Name)
-        reqContext = struct.pack('!25s2I',Name,statinfo.st_size,UploadUserID)
+        reqContext = struct.pack('!25s2I',str(Name),statinfo.st_size,UploadUserID)
         
         ansType,asnContext = self.__Request(RequsetType.shareFile,reqContext)
         if ansType != AnswerType.success:
@@ -122,7 +122,7 @@ class Client:
 
     def getFile(self,Name,SaveDir = downloadDir):
         ''' 查找文件 '''
-        reqContext = struct.pack('!25s',Name)
+        reqContext = struct.pack('!25s',str(Name))
         ansType,asnContext = self.__Request(RequsetType.getFile,reqContext)
         if ansType != AnswerType.success:
             print 'getFile failed: %s' % asnContext
@@ -131,7 +131,6 @@ class Client:
             DisIP = DisIP.rstrip('\0')
             self.__getFile(Name,Size,DisIP,DisPort)
             print 'getFile success! %s' %Name 
-            
             
     def __getFile(self,fileName,fileSize,DisIP,DisPort):
         self.getFileSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

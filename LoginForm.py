@@ -1,5 +1,6 @@
 # -*- coding: UTF-8 -*-
 import wx
+from MainForm import MainFrame
 from client import Client
 
 class LoginFrame(wx.Frame):
@@ -33,6 +34,10 @@ class LoginFrame(wx.Frame):
             dlg.Destroy()
         else:
             # 用户登录成功
+            mainFrame = MainFrame(parent=None, id=-1)
+            mainFrame.Show()
+            mainFrame.UserID = ID
+            self.Destroy()
             pass
             
     def OnCloseWindow(self, event):
