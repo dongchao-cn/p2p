@@ -120,21 +120,22 @@ class Client:
         else:
             print 'shareFile success!'
             
-    def searchFile(self,Name,SaveDir = downloadDir):
+    def searchFile(self,Name):
         ''' 查找文件 '''
         reqContext = struct.pack('!25s',str(Name))
         ansType,asnContext = self.__Request(RequsetType.searchFile,reqContext)
         if ansType != AnswerType.success:
             print 'searchFile failed: %s' % asnContext
-            return '',0,0,'',0
+            return '',0,0,'',0,'',0
         else:
-            Name,Size,UploadUserID,UploadUserName,OnLine = struct.unpack('!25s2I25sI',asnContext)
+            Name,Size,UploadUserID,UploadUserName,OnLine,IP,ListenPort = struct.unpack('!25s2I25sI25sI',asnContext)
             Name = Name.rstrip('\0')
+            IP = IP.rstrip('\0')
             #self.__getFile(Name,Size,DisIP,DisPort)
             #print 'getFile success! %s' %Name
-            return Name,Size,UploadUserID,UploadUserName,OnLine
+            return Name,Size,UploadUserID,UploadUserName,OnLine,IP,ListenPort
             
-    def __getFile(self,fileName,fileSize,DisIP,DisPort):
+    def getFile(self,fileName,fileSize,DisIP,DisPort):
         self.getFileSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.getFileSock.connect((DisIP, DisPort))
         # 发送文件名

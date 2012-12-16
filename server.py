@@ -308,10 +308,10 @@ class Server():
                 if IP:
                     # 当前用户在线
                     ansType = AnswerType.success
-                    ansContext = struct.pack('!25s2I25sI',Name,Size,UploadUserID,str(UploadUserName),1)
+                    ansContext = struct.pack('!25s2I25sI25sI',Name,Size,UploadUserID,str(UploadUserName),1,str(IP),ListenPort)
                 else:
                     ansType = AnswerType.success
-                    ansContext = struct.pack('!25s2I25sI',Name,Size,UploadUserID,str(UploadUserName),0)
+                    ansContext = struct.pack('!25s2I25sI25sI',Name,Size,UploadUserID,str(UploadUserName),0,str(IP),ListenPort)
             return ansType, ansContext
         
 if __name__ == '__main__':

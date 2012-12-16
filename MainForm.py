@@ -29,6 +29,7 @@ class MainFrame(wx.Frame):
         self.searchCtrl = wx.TextCtrl(panel, -1, "", pos=(250, 10))
         searchButton = wx.Button(panel, label=u"搜索文件", pos=(360, 10),size=(60, 25))
         self.Bind(wx.EVT_BUTTON, self.searchFile, searchButton)
+        wx.StaticText(panel, -1, u"右键下载！", pos=(250, 40))
 
         self.searchFilelistCtl = wx.ListCtrl(panel,-1,pos=(250,60),size = (500,200),style = wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES)
         self.searchFilelistCtl.InsertColumn(1,u"文件名")
@@ -36,11 +37,17 @@ class MainFrame(wx.Frame):
         self.searchFilelistCtl.InsertColumn(3,u"上传文件用户ID")
         self.searchFilelistCtl.InsertColumn(3,u"上传文件用户名")
         self.searchFilelistCtl.InsertColumn(4,u"当前是否在线")
+        self.searchFilelistCtl.InsertColumn(5,u"对方IP")
+        self.searchFilelistCtl.InsertColumn(6,u"对方端口")
         self.searchFilelistCtl.SetColumnWidth(0, 100)
         self.searchFilelistCtl.SetColumnWidth(1, 80)
         self.searchFilelistCtl.SetColumnWidth(2, 100)
         self.searchFilelistCtl.SetColumnWidth(3, 100)
         self.searchFilelistCtl.SetColumnWidth(4, 100)
+        self.searchFilelistCtl.SetColumnWidth(5, 100)
+        self.searchFilelistCtl.SetColumnWidth(6, 100)
+
+        self.Bind(wx.EVT_LIST_ITEM_RIGHT_CLICK, self.OnItemRClick, self.searchFilelistCtl)
         
         #listCtl.InsertStringItem(1,"1")
         #listCtl.InsertStringItem(2,"2")
@@ -65,7 +72,7 @@ class MainFrame(wx.Frame):
 
     def searchFile(self, event):
         fileName = self.searchCtrl.GetValue()
-        fileName,fileSize,UploadUserID,UploadUserName,Online = self.client.searchFile(fileName)
+        fileName,fileSize,UploadUserID,UploadUserName,Online,IP,ListenPort = self.client.searchFile(fileName)
         if fileName == '':
             dlg = wx.MessageDialog(None,u'未找到此文件！','',wx.OK)
             dlg.ShowModal()
@@ -77,9 +84,28 @@ class MainFrame(wx.Frame):
         self.searchFilelistCtl.SetStringItem(0,3,UploadUserName)
         if Online == 1:
             self.searchFilelistCtl.SetStringItem(0,4,'True')
+            self.searchFilelistCtl.SetStringItem(0,5,IP)
+            self.searchFilelistCtl.SetStringItem(0,6,str(ListenPort))
         else:
             self.searchFilelistCtl.SetStringItem(0,4,'False')
+
+    def OnItemRClick(self, evt):
+        itemID = evt.GetIndex()
+        item = self.searchFilelistCtl.GetItem(itemID)
+        dlg = wx.MessageDialog(None,u"是否下载文件:'%s'?" % str(item.GetText()),'',wx.YES_NO)
+        ret = dlg.ShowModal()
+        dlg.Destroy()
+        if (ret == wx.ID_YES):
+            fileName = self.searchFilelistCtl.GetItem(itemID,0).GetText()
+            fileSize = int(self.searchFilelistCtl.GetItem(itemID,1).GetText())
+            DisIP = self.searchFilelistCtl.GetItem(itemID,5).GetText()
+            DisPort = int(self.searchFilelistCtl.GetItem(itemID,6).GetText())
+            self.client.getFile(fileName,fileSize,DisIP,DisPort)
+        else:
+            print 'No'
         
+        
+ 
     def OnCloseWindow(self, event):
         #self.client.userLogout(self.UserID)
         self.Destroy()
