@@ -39,9 +39,10 @@ class LoginFrame(wx.Frame):
             dlg.Destroy()
         else:
             # 用户登录成功
-            mainFrame = MainFrame(parent=None, id=-1)
+            mainFrame = MainFrame(parent=None, id=-1,uid = ID)
+            #mainFrame.UserID = ID
+            #print 'mainFrame.UserID ' , mainFrame.UserID
             mainFrame.Show()
-            mainFrame.UserID = ID
             self.Destroy()
             pass
 

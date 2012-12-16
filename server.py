@@ -10,7 +10,9 @@ class RequsetType:
     userLogin = '01'
     userLogout = '02'
     shareFile = '10'
-    searchFile = '11'
+    stopShareFile = '11'
+    searchFile = '12'
+    getMyShareFile = '13'
 class AnswerType:
     success = '00'
     failed = '01'
@@ -197,6 +199,7 @@ class Server():
             cur.execute("DELETE FROM File WHERE ID = %s;",val)
             con.commit()
             print "delFile Success,Name = %s,uploadUserID = %s!" % (fileName,uploadUserID)
+            return True
         finally:
             if con:
                 con.close()
@@ -219,6 +222,33 @@ class Server():
             return thefile[1],thefile[2],thefile[3]
         except:
             return '',0,0
+        finally:
+            if con:
+                con.close()
+                
+    def getMyShareFile(self,UploadUserID):
+        ''' 获得本人共享的所有文件 '''
+        try:
+            con = None
+            con = mdb.connect(host = self.dbHost,port = self.dbPort,user = self.dbUser,\
+                              passwd = self.dbPasswd,db = self.dbName,charset='utf8')
+            cur = con.cursor()
+
+            # 获得文件
+            val = [UploadUserID]
+            cur.execute("SELECT * FROM File WHERE UploadUserID = %s;",val)
+            thefile = cur.fetchall()
+            print thefile
+            if cur.rowcount == 0:
+                return False
+            #print "getFile Success,Name = %s,Size = %s,uploadUserID = %s!" % (thefile[1],thefile[2],thefile[3])
+            filesName = []
+            for fileInfo in thefile:
+                filesName.append(fileInfo[1])
+            print filesName
+            return filesName
+        #except:
+            #return False
         finally:
             if con:
                 con.close()
@@ -294,6 +324,19 @@ class Server():
                 ansContext = struct.pack('!100s','shareFile Failed!!!!!!!')
             return ansType, ansContext
 
+        if reqType == RequsetType.stopShareFile:
+            # 取消分享文件
+            Name,UploadUserID = struct.unpack('!25sI',reqContext)
+            Name = Name.rstrip('\0')
+            ansContext = ''
+            ret = self.delFile(Name,UploadUserID)
+            if ret:
+                ansType = AnswerType.success
+            else:
+                ansType = AnswerType.failed
+                ansContext = struct.pack('!100s','shareFile Failed!!!!!!!')
+            return ansType, ansContext
+        
         if reqType == RequsetType.searchFile:
             # 查找文件
             Name, = struct.unpack('!25s',reqContext)
@@ -312,6 +355,25 @@ class Server():
                 else:
                     ansType = AnswerType.success
                     ansContext = struct.pack('!25s2I25sI25sI',Name,Size,UploadUserID,str(UploadUserName),0,str(IP),ListenPort)
+            return ansType, ansContext
+        
+        if reqType == RequsetType.getMyShareFile:
+            # 获得自己分享的文件
+            UploadUserID, = struct.unpack('!I',reqContext)
+            ansContext = ''
+            ret = self.getMyShareFile(UploadUserID)
+            if ret:
+                ansType = AnswerType.success
+                #allName = ''
+                #for name in ret:
+                    #print '%s|' % name
+                    #allName = allName + ('%s|' % name)
+                allName = string.join(ret,'|')
+                print allName
+                ansContext = struct.pack('!I%ds' % len(allName),len(allName),str(allName))
+            else:
+                ansType = AnswerType.failed
+                ansContext = struct.pack('!100s','shareFile Failed!!!!!!!')
             return ansType, ansContext
         
 if __name__ == '__main__':

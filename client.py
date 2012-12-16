@@ -4,14 +4,16 @@ import struct
 import os
 import thread
 import random
-
+import string
 
 class RequsetType:
     userReg = '00'
     userLogin = '01'
     userLogout = '02'
     shareFile = '10'
-    searchFile = '11'
+    stopShareFile = '11'
+    searchFile = '12'
+    getMyShareFile = '13'
 class AnswerType:
     success = '00'
     failed = '01'
@@ -119,6 +121,34 @@ class Client:
             print 'shareFile failed: %s' % asnContext
         else:
             print 'shareFile success!'
+
+    def stopShareFile(self,Name,UploadUserID):
+        ''' 取消分享文件 '''
+        reqContext = struct.pack('!25sI',str(Name),UploadUserID)
+        
+        ansType,asnContext = self.__Request(RequsetType.stopShareFile,reqContext)
+        if ansType != AnswerType.success:
+            print 'stopShareFile failed: %s' % asnContext
+        else:
+            print 'stopShareFile success!'
+
+    def getMyShareFile(self,UploadUserID):
+        ''' 获得自己分享的文件 '''
+        reqContext = struct.pack('!I',UploadUserID)
+        
+        ansType,asnContext = self.__Request(RequsetType.getMyShareFile,reqContext)
+        if ansType != AnswerType.success:
+            print 'getMyShareFile failed: %s' % asnContext
+        else:
+            print 'getMyShareFile success!'
+            fileLen, = struct.unpack('!I',asnContext[0:4])
+            print fileLen
+            print asnContext[4:]
+            allName, = struct.unpack('!%ds' % fileLen,asnContext[4:])
+            print allName
+            filesName = string.split(allName,'|')
+
+            return filesName
             
     def searchFile(self,Name):
         ''' 查找文件 '''
@@ -161,10 +191,14 @@ if __name__ == '__main__':
     #client.userReg('dc','123')
     ID = client.userLogin('dc','123')
 
-    #client.shareFile('osrloaderv30.zip',ID)
-
-    #os.system("pause")
+    client.shareFile('1.txt',ID)
+    client.shareFile('2.txt',ID)
+    client.shareFile('3.txt',ID)
+    client.shareFile('4.txt',ID)
     
+    #os.system("pause")
+    client.getMyShareFile(ID)
+    client.stopShareFile('1.txt',ID)
     #client.getFile('osrloaderv30.zip')
 
     #client.userLogout('dc','123')
