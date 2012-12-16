@@ -10,7 +10,7 @@ class RequsetType:
     userLogin = '01'
     userLogout = '02'
     shareFile = '10'
-    getFile = '11'
+    searchFile = '11'
 class AnswerType:
     success = '00'
     failed = '01'
@@ -119,7 +119,7 @@ class Server():
             if con:
                 con.close()
 
-    def userLogout(self,userName,passwd):
+    def userLogout(self,UserID):
         ''' 用户注销 '''
         try:
             con = None
@@ -128,13 +128,14 @@ class Server():
             cur = con.cursor()
 
             # 用户注销
-            val = [userName,passwd]
-            cur.execute("SELECT * FROM User WHERE Name = %s AND Passwd = %s;",val)
-            user = cur.fetchone()
-            val = ['NULL','0',user[0]]
+            #val = [UserID]
+            #cur.execute("SELECT * FROM User WHERE ID = %s;",val)
+            #user = cur.fetchone()
+            val = ['NULL','0',UserID]
+            print val
             cur.execute("UPDATE User SET IP = %s ,ListenPort = %s WHERE ID = %s;",val)
             con.commit()
-            print "userLogout Success,Name = %s,passwd = %s!" % (userName,passwd)
+            print "userLogout Success,ID = %s!" % (UserID)
             return True
         #except:
             #return False
@@ -234,7 +235,7 @@ class Server():
             connection.send(ansType)
             connection.send(ansContext)
             connection.close()
-
+                
     def doRequest(self,reqType,reqContext):
         #print reqType
         #print reqContext
@@ -270,11 +271,9 @@ class Server():
 
         if reqType == RequsetType.userLogout:
             # 注销用户
-            Name,Passwd = struct.unpack('!25s25s',reqContext)
-            Name = Name.rstrip('\0')
-            Passwd = Passwd.rstrip('\0')
+            UserID, = struct.unpack('!I',reqContext)
             ansContext = ''
-            ret = self.userLogout(Name,Passwd)
+            ret = self.userLogout(UserID)
             if ret:
                 ansType = AnswerType.success
             else:
@@ -295,7 +294,7 @@ class Server():
                 ansContext = struct.pack('!100s','shareFile Failed!!!!!!!')
             return ansType, ansContext
 
-        if reqType == RequsetType.getFile:
+        if reqType == RequsetType.searchFile:
             # 查找文件
             Name, = struct.unpack('!25s',reqContext)
             Name = Name.rstrip('\0')
@@ -305,13 +304,14 @@ class Server():
                 ansType = AnswerType.failed
                 ansContext = struct.pack('!100s','No Such File!!!!!!!')
             else:
-                (a,b,IP,ListenPort) = self.getUser(UploadUserID)
+                (UploadUserName,b,IP,ListenPort) = self.getUser(UploadUserID)
                 if IP:
+                    # 当前用户在线
                     ansType = AnswerType.success
-                    ansContext = struct.pack('!I25sI',Size,str(IP),ListenPort)
+                    ansContext = struct.pack('!25s2I25sI',Name,Size,UploadUserID,str(UploadUserName),1)
                 else:
-                    ansType = AnswerType.failed
-                    ansContext = struct.pack('!100s','File Owner Logout!!!!!!!')
+                    ansType = AnswerType.success
+                    ansContext = struct.pack('!25s2I25sI',Name,Size,UploadUserID,str(UploadUserName),0)
             return ansType, ansContext
         
 if __name__ == '__main__':

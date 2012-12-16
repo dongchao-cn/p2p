@@ -6,10 +6,14 @@ from client import Client
 class MainFrame(wx.Frame):
     UserID = 0
     def __init__(self, parent, id):
+        
         self.client = Client()
-        wx.Frame.__init__(self, parent, id, u'P2P分享',size=(600, 400))
+        wx.Frame.__init__(self, parent, id, u'P2P分享',size=(800, 400))
         panel = wx.Panel(self) #创建画板
-        # 控件
+
+        self.Bind(wx.EVT_CLOSE, self.OnCloseWindow)
+        
+        # 分享文件
         shareFileButton = wx.Button(panel, label=u"分享文件", pos=(10, 8),size=(70, 25)) #将按钮添加到画板
 
         wx.StaticText(panel, -1, u"当前分享文件:", pos=(10, 40))
@@ -17,9 +21,27 @@ class MainFrame(wx.Frame):
         #绑定按钮的单击事件
         self.Bind(wx.EVT_BUTTON, self.shareFile, shareFileButton)
 
-        self.shareFilelistCtl = wx.ListCtrl(panel,-1,pos=(10,60),size = (300,200),style = wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES)
+        self.shareFilelistCtl = wx.ListCtrl(panel,-1,pos=(10,60),size = (200,200),style = wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES)
         self.shareFilelistCtl.InsertColumn(1,u"文件名")
-        self.shareFilelistCtl.SetColumnWidth(0, 200)
+        self.shareFilelistCtl.SetColumnWidth(0, 190)
+
+        # 搜索文件
+        self.searchCtrl = wx.TextCtrl(panel, -1, "", pos=(250, 10))
+        searchButton = wx.Button(panel, label=u"搜索文件", pos=(360, 10),size=(60, 25))
+        self.Bind(wx.EVT_BUTTON, self.searchFile, searchButton)
+
+        self.searchFilelistCtl = wx.ListCtrl(panel,-1,pos=(250,60),size = (500,200),style = wx.LC_REPORT|wx.LC_HRULES|wx.LC_VRULES)
+        self.searchFilelistCtl.InsertColumn(1,u"文件名")
+        self.searchFilelistCtl.InsertColumn(2,u"文件大小")
+        self.searchFilelistCtl.InsertColumn(3,u"上传文件用户ID")
+        self.searchFilelistCtl.InsertColumn(3,u"上传文件用户名")
+        self.searchFilelistCtl.InsertColumn(4,u"当前是否在线")
+        self.searchFilelistCtl.SetColumnWidth(0, 100)
+        self.searchFilelistCtl.SetColumnWidth(1, 80)
+        self.searchFilelistCtl.SetColumnWidth(2, 100)
+        self.searchFilelistCtl.SetColumnWidth(3, 100)
+        self.searchFilelistCtl.SetColumnWidth(4, 100)
+        
         #listCtl.InsertStringItem(1,"1")
         #listCtl.InsertStringItem(2,"2")
 
@@ -40,8 +62,26 @@ class MainFrame(wx.Frame):
         dlg.ShowModal()
         dlg.Destroy()
         self.shareFilelistCtl.InsertStringItem(1,fileName)
+
+    def searchFile(self, event):
+        fileName = self.searchCtrl.GetValue()
+        fileName,fileSize,UploadUserID,UploadUserName,Online = self.client.searchFile(fileName)
+        if fileName == '':
+            dlg = wx.MessageDialog(None,u'未找到此文件！','',wx.OK)
+            dlg.ShowModal()
+            dlg.Destroy()
+            return
+        self.searchFilelistCtl.InsertStringItem(0,fileName)
+        self.searchFilelistCtl.SetStringItem(0,1,str(fileSize))
+        self.searchFilelistCtl.SetStringItem(0,2,str(UploadUserID))
+        self.searchFilelistCtl.SetStringItem(0,3,UploadUserName)
+        if Online == 1:
+            self.searchFilelistCtl.SetStringItem(0,4,'True')
+        else:
+            self.searchFilelistCtl.SetStringItem(0,4,'False')
         
     def OnCloseWindow(self, event):
+        #self.client.userLogout(self.UserID)
         self.Destroy()
         
 if __name__ == '__main__':

@@ -11,7 +11,7 @@ class RequsetType:
     userLogin = '01'
     userLogout = '02'
     shareFile = '10'
-    getFile = '11'
+    searchFile = '11'
 class AnswerType:
     success = '00'
     failed = '01'
@@ -100,9 +100,9 @@ class Client:
             print 'userLogin success: ID = %s' % ID
             return ID
 
-    def userLogout(self,Name,Passwd):
+    def userLogout(self,UserID):
         ''' 用户注销 '''
-        reqContext = struct.pack('!25s25s',str(Name),str(Passwd))
+        reqContext = struct.pack('!I',UserID)
         ansType,asnContext = self.__Request(RequsetType.userLogout,reqContext)
         if ansType != AnswerType.success:
             print 'userLogout failed: %s' % asnContext
@@ -119,18 +119,20 @@ class Client:
             print 'shareFile failed: %s' % asnContext
         else:
             print 'shareFile success!'
-
-    def getFile(self,Name,SaveDir = downloadDir):
+            
+    def searchFile(self,Name,SaveDir = downloadDir):
         ''' 查找文件 '''
         reqContext = struct.pack('!25s',str(Name))
-        ansType,asnContext = self.__Request(RequsetType.getFile,reqContext)
+        ansType,asnContext = self.__Request(RequsetType.searchFile,reqContext)
         if ansType != AnswerType.success:
-            print 'getFile failed: %s' % asnContext
+            print 'searchFile failed: %s' % asnContext
+            return '',0,0,'',0
         else:
-            Size,DisIP,DisPort = struct.unpack('!I25sI',asnContext)
-            DisIP = DisIP.rstrip('\0')
-            self.__getFile(Name,Size,DisIP,DisPort)
-            print 'getFile success! %s' %Name 
+            Name,Size,UploadUserID,UploadUserName,OnLine = struct.unpack('!25s2I25sI',asnContext)
+            Name = Name.rstrip('\0')
+            #self.__getFile(Name,Size,DisIP,DisPort)
+            #print 'getFile success! %s' %Name
+            return Name,Size,UploadUserID,UploadUserName,OnLine
             
     def __getFile(self,fileName,fileSize,DisIP,DisPort):
         self.getFileSock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
